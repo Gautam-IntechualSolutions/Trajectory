@@ -1,0 +1,1 @@
+This is Piyo Piyo. He is my best and most loyal friend of 20 years. I've moved around a lot since I was young, but Piyo Piyo was always by my side to keep me company. In a world that is full of change and uncertainty, Piyo Piyo reminds me that some things will always stay the same.
