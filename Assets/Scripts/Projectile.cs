@@ -1,24 +1,72 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
+
 
 public class Projectile : MonoBehaviour
 {
-    public Rigidbody projectile,obj;
-    public GameObject cursor;
+    public Text scoreCount, ringCount, levelCount;
+    public Rigidbody projectile, obj;
+    public GameObject cursor, stageObj;
     public Transform shootPoint;
     public LayerMask layer;
     public LineRenderer lineVisual;
     public int lineSegment = 10;
     public float flightTime = 1f;
     Vector3 rp;
-    bool isThrow = false,isActive=false;
-
+    bool isThrow = false, isActive = false;
     private Camera cam;
+    public List<GameObject> objPos, onStage;
+    int ring;
 
     // Start is called before the first frame update
     void Start()
     {
+
+        GameManager.Instance.score = PlayerPrefs.GetInt("Score");
+        if (PlayerPrefs.GetInt("level") <= 3)
+        {
+            ring = PlayerPrefs.GetInt("level") + 2;
+            for (int i = 0; i < ring - 2; i++)
+            {
+                onStage.Add(Instantiate(stageObj));
+                onStage[i].transform.position = objPos[i].transform.position;
+                GameManager.Instance.activeObjCount++;
+            }
+        }
+        else if (PlayerPrefs.GetInt("level") > 3 && PlayerPrefs.GetInt("level") <= 10)
+        {
+            ring = Random.Range(3, 5);
+            for (int i = 0; i < ring - 2; i++)
+            {
+                onStage.Add(Instantiate(stageObj));
+                onStage[i].transform.position = objPos[i].transform.position;
+                GameManager.Instance.activeObjCount++;
+            }
+        }
+        else if(PlayerPrefs.GetInt("level") > 10 && PlayerPrefs.GetInt("level") <= 20)
+        {
+            ring = Random.Range(3, 6);
+            for (int i = 0; i < ring - 2; i++)
+            {
+                onStage.Add(Instantiate(stageObj));
+                onStage[i].transform.position = objPos[i].transform.position;
+                GameManager.Instance.activeObjCount++;
+            }
+        }
+        else if(PlayerPrefs.GetInt("level") > 20)
+        {
+            ring = Random.Range(3, 7);
+            for (int i = 0; i < ring - 2; i++)
+            {
+                onStage.Add(Instantiate(stageObj));
+                onStage[i].transform.position = objPos[i].transform.position;
+                GameManager.Instance.activeObjCount++;
+            }
+        }
+
         cam = Camera.main;
         lineVisual.positionCount = lineSegment + 1;
         cursor.SetActive(false);
@@ -27,13 +75,25 @@ public class Projectile : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        scoreCount.text = "Score : " + GameManager.Instance.score;
+        ringCount.text = "X " + ring.ToString();
+        levelCount.text = "Level " + PlayerPrefs.GetInt("level");
+
+        //Debug.Log("Objects are active " + GameManager.Instance.activeObjCount + " of "+ onStage.Count);
+        if (GameManager.Instance.activeObjCount == 0)
+        {
+            GameManager.Instance.isGameOver = false;
+        }
+        else
+        {
+            GameManager.Instance.isGameOver = true;
+        }
         if (Input.GetMouseButton(0))
         {
             if (!isActive)
             {
                 LaunchProjectile();
-            }       
-            //LaunchProjectile();
+            }
         }
         if (Input.GetMouseButtonUp(0) && isThrow)
         {
@@ -43,7 +103,6 @@ public class Projectile : MonoBehaviour
 
     void LaunchProjectile()
     {
-
         Ray camRay = cam.ScreenPointToRay(Input.mousePosition);
         RaycastHit hit;
 
@@ -52,8 +111,8 @@ public class Projectile : MonoBehaviour
             if (hit.collider.tag != "backstage")
             {
                 cursor.SetActive(true);
-                cursor.transform.position = hit.point + Vector3.up * 0.1f;
-                Vector3 vo = CalculateVelocty(hit.point, shootPoint.position, flightTime);
+                cursor.transform.position = hit.point + Vector3.up * 0.5f;
+                Vector3 vo = CalculateVelocty(hit.point, shootPoint.position, flightTime * 2f);
                 rp = vo;
                 isThrow = true;
                 Visualize(vo, cursor.transform.position); //we include the cursor position as the final nodes for the line visual position
@@ -77,6 +136,7 @@ public class Projectile : MonoBehaviour
     void mouseRelease()
     {
         obj = Instantiate(projectile, shootPoint.position, Quaternion.identity);
+        ring--;
         isActive = true;
         obj.velocity = rp;
         lineVisual.positionCount = 0;
@@ -96,7 +156,7 @@ public class Projectile : MonoBehaviour
     {
         for (int i = 0; i < lineSegment; i++)
         {
-            Vector3 pos = CalculatePosInTime(vo, (i / (float)lineSegment) * flightTime);
+            Vector3 pos = CalculatePosInTime(vo, (i / (float)lineSegment) * flightTime * 2f);
             lineVisual.SetPosition(i, pos);
         }
 
@@ -139,5 +199,17 @@ public class Projectile : MonoBehaviour
         yield return new WaitForSecondsRealtime(4f);
         Destroy(obj);
         isActive = false;
+        if ((ring == 0 && !GameManager.Instance.isGameOver) || !GameManager.Instance.isGameOver)
+        {
+            SceneManager.LoadScene("GAMESCENE");
+            PlayerPrefs.SetInt("Score", GameManager.Instance.score);
+            PlayerPrefs.SetInt("level", PlayerPrefs.GetInt("level") + 1);
+        }
+        if (ring == 0 && GameManager.Instance.isGameOver)
+        {
+            SceneManager.LoadScene("GAMEOVER");
+            PlayerPrefs.SetInt("Score", GameManager.Instance.score);
+            PlayerPrefs.SetInt("level", PlayerPrefs.GetInt("level"));
+        }
     }
 }

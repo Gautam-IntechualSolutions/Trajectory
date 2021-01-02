@@ -6,6 +6,7 @@ TagManager:
   tags:
   - stage
   - backstage
+  - obj
   layers:
   - Default
   - TransparentFX
